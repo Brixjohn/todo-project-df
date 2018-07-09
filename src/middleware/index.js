@@ -16,21 +16,16 @@ export default ({ config, db }) => {
 
 	//VIEW ALL TODO
 	//ADD TODO
-	routes.post('/add', (req, res) => {
-		console.log("check")
-		db.run("INSERT INTO todo(priority,subject,content,datestamp,userid) VALUES (?,'yeyyey', 'yey', '2018-03-21 09:03:14.233', 0)", parseInt(req.query.priority), (err) => {
-			if(err) {
-				throw err
-				console.log(err)
-			}
-			console.log("here")
-			res.send("ADDED")
-			res.end()
-			console.log(this.lastID)
+	routes.post('/todo-add', (req, res) => {
+		db.run("INSERT INTO todo(priority,subject,content,datestamp,userid) VALUES (?,?, ?, ?, 0)", [req.body.priority, req.body.subject, req.body.content, Date.now()], (err) => {
+			if(err) throw err
+			res.send("ADDED SUCCESSFULLY")
+			console.log(req.body)
 		})
 	})
 
 	//UPDATE TODO
+	
 	//DELETE TODO
 
 	return routes;
