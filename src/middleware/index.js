@@ -37,7 +37,17 @@ export default ({ config, db }) => {
 		})
 	})
 
-	//DELETE TODO
+	//DELETE TODO BY ID
+	routes.post('/todo-remove/:id', (req, res) => {
+		let info
+		db.get("SELECT subject, content, priority FROM todo WHERE id = ?", req.params.id, (err, row) => {
+			if(err) throw err
+			res.send(row)
+		})
+		db.run("DELETE FROM todo WHERE id=?", req.params.id, (err) => {
+			if(err) throw err
+		})
+	})
 
 	return routes;
 }
