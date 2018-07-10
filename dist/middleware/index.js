@@ -16,30 +16,36 @@ exports.default = function (_ref) {
 
 	//VIEW TODO BY ID
 	routes.get('/todo/:id', function (req, res) {
-		console.log("one");
-		db.get("SELECT subject, content, priority FROM todo WHERE id = ?", parseInt(req.params.id), function (err, row) {
+		db.get("SELECT subject, content, priority FROM todo WHERE id = ?", req.params.id, function (err, row) {
 			if (err) throw err;
 			res.send(row);
 		});
 	});
 
 	//VIEW ALL TODO
+	routes.get('/todo-all', function (req, res) {
+		db.all("SELECT subject, content, priority FROM todo", function (err, rows) {
+			if (err) throw err;
+			res.send(rows);
+		});
+	});
+
 	//ADD TODO
-	routes.post('/add', function (req, res) {
-		console.log("check");
-		db.run("INSERT INTO todo(priority,subject,content,datestamp,userid) VALUES (?,'yeyyey', 'yey', '2018-03-21 09:03:14.233', 0)", parseInt(req.query.priority), function (err) {
-			if (err) {
-				throw err;
-				console.log(err);
-			}
-			console.log("here");
-			res.send("ADDED");
-			res.end();
-			console.log(undefined.lastID);
+	routes.post('/todo-add', function (req, res) {
+		db.run("INSERT INTO todo(priority,subject,content,datestamp,userid) VALUES (?, ?, ?, ?, 0)", [req.body.priority, req.body.subject, req.body.content, Date.now()], function (err) {
+			if (err) throw err;
+			res.send("ADDED SUCCESSFULLY");
 		});
 	});
 
 	//UPDATE TODO
+	routes.post('/todo-update/:id', function (req, res) {
+		db.run("UPDATE todo SET priority=?, subject=?, content=?, datestamp=? WHERE id=?", [req.body.priority, req.body.subject, req.body.content, Date.now(), req.params.id], function (err) {
+			if (err) throw err;
+			res.send("UPDATED SUCCESSFULLY");
+		});
+	});
+
 	//DELETE TODO
 
 	return routes;
