@@ -21,6 +21,22 @@ export default ({ config, db }) => {
 		})
 	})
 
+	//VIEW TODO RANKED BY PRIORITY
+	routes.get('/todo-rank-priority', (req, res) => {
+		db.all("SELECT subject, content, priority FROM todo ORDER BY priority", (err, rows) => {
+			if(err) throw err
+			res.send(rows);
+		})
+	})
+
+	//VIEW TODO BY PRIORITY
+	routes.get('/todo-priority/:priority', (req, res) => {
+		db.all("SELECT subject, content, priority FROM todo WHERE priority = ?", req.params.priority, (err, rows) => {
+			if(err) throw err
+			res.send(rows);
+		})
+	})
+
 	//ADD TODO
 	routes.post('/todo-add', (req, res) => {
 		db.run("INSERT INTO todo(priority,subject,content,datestamp) VALUES (?, ?, ?, ?)", [req.body.priority, req.body.subject, req.body.content, Date.now()], (err) => {
