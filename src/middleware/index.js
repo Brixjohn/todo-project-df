@@ -55,7 +55,6 @@ export default ({ config, db }) => {
 
 	//DELETE TODO BY ID
 	routes.post('/todo-remove/:id', (req, res) => {
-		let info
 		db.get("SELECT subject, content, priority FROM todo WHERE id = ?", req.params.id, (err, row) => {
 			if(err) throw err
 			res.send(row)
@@ -63,6 +62,31 @@ export default ({ config, db }) => {
 		db.run("DELETE FROM todo WHERE id=?", req.params.id, (err) => {
 			if(err) throw err
 		})
+	})
+
+	routes.post('/api/todoWebhook', (req, res) => {
+		switch(req.body.queryResult.action) {
+			case "todo-create":
+				console.log("YEYEYEYE!")
+				// todo_create()
+				break
+			case "todo-view":	// add todo-view-all, todo-view-priority, todo-rank-priority, todo-view-id
+				console.log("LOLOLOLOL")
+				// todo_view()
+				break
+			case "todo-update":
+				console.log("JAJAJAJAJA")
+				// todo_update()
+				break
+			case "todo-delete": // add delete-all, delete-priority, delete-id
+				console.log("WWWWWWWW")
+				// todo_delete()
+				break
+			default:
+				console.log(req.body)
+
+
+		}
 	})
 
 	return routes;
