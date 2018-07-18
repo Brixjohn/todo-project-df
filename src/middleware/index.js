@@ -6,191 +6,137 @@ export default ({ config, db }) => {
 	// add middleware here
 
 	// CREATING A TODO ENTRY
-	function todo_create(priority, subject, content) {
+	function todo_create(priority, subject, content, res) {
 		db.run("INSERT INTO todo(priority,subject,content,datestamp) VALUES (?, ?, ?, ?)", [priority, subject, content, Date.now()], (err) => {
 			if(err) throw err
-			// res.send("ADDED SUCCESSFULLY")
+			let message = "Okay. Successfully added your \"" + subject + "\" task!"
+			res.json({
+				"speech": message,
+				"displayText": message
+			})
 		})
 	}
 
 	// VIEWING TODO ENTRIES
-	function todo_view_all() {
-		db.all("SELECT subject, content, priority FROM todo", (err, rows) => {
+	function todo_view_all(res) {
+		db.all("SELECT id, subject, content FROM todo ORDER BY priority", (err, rows) => {
 			if(err) throw err
-			// res.send(rows);
-			return rows
-		})
-	}
+			let messages = []
+			let count = 0
+			for(let row of rows) {
+				if (count >= 10) break
+				let deltext = "Delete task " + row.id
+				let updtext = "Update task " + row.id
+				messages.push({
+					"buttons": [
+					{
+						"postback": updtext,
+						"text": "UPDATE"
 
-	function todo_view_priority(priority) {
-		db.all("SELECT subject, content, priority FROM todo WHERE priority = ?", priority, (err, rows) => {
-			if(err) throw err
-			// res.send(rows);
-			return rows
-		})
-	}
-
-	function todo_rank_priority() {
-		db.all("SELECT subject, content, priority FROM todo ORDER BY priority", (err, rows) => {
-			if(err) throw err
-			// res.send(rows);
-			return rows
-		})
-	}
-
-	function todo_view_id(id) {
-		db.get("SELECT subject, content, priority FROM todo WHERE id = ?", id, (err, row) => {
-			if(err) throw err
-			// res.send(row);
-			return row
+					}, {
+						"postback": deltext,
+						"text": "DELETE"
+					}],
+					"imageUrl": undefined,
+					"platform": "facebook",
+					"subtitle": row.content,
+					"title": row.subject,
+					"type": 1
+					})
+				count++
+			}
+			res.json({
+				"messages": messages
+			})
 		})
 	}
 
 
 	// UPDATE A TODO ENTRY
-	function todo_update(priority, subject, content, id) {
+	function todo_update(priority, subject, content, id, res) {
 		db.run("UPDATE todo SET priority=?, subject=?, content=?, datestamp=? WHERE id=?", [priority, subject, content, Date.now(), id], (err) => {
 			if(err) throw err
 			db.get("SELECT id, subject, content, priority FROM todo WHERE id = ?", id, (err, row) => {
 				if(err) throw err
-				// res.send(row);
-				return row
+				let message = "Okay. Successfully updated your \"" + subject + "\" task!"
+				res.json({
+					"speech": message,
+					"displayText": message,
+				})
 			})
 		})
 	}
 
-	// DELETE TODO ENTRIES
-	function todo_delete_all() {
-		db.all("SELECT id, subject, content, priority FROM todo", (err, rows) => {
-			if(err) throw err
-			db.run("DELETE FROM todo", (err) => {
-				if(err) throw err
-			})
-			// res.send(rows)
-			return rows
-		})
-	}
-	function todo_delete_id(id) {
+	// DELETE SPECIFIC TODO BY ID
+	function todo_delete_id(id, res) {
 		db.get("SELECT id, subject, content, priority FROM todo WHERE id = ?", id, (err, row) => {
 			if(err) throw err
-			db.run("DELETE FROM todo WHERE id=?", req.params.id, (err) => {
-				if(err) throw err
+			res.json({
+				"messages": [{
+					"buttons": [
+						{
+							"postback": "yes",
+							"text": "YES"
+						}, {
+							"postback": "no",
+							"text": "NO"
+						}],
+						"imageUrl": undefined,
+						"platform": "facebook",
+						"subtitle": row.subject,
+						"title": "Are you sure?",
+						"type": 1
+				}]
 			})
-			// res.send(row)
-			return rows
 		})
 	}
 
-	//VIEW TODO BY ID
-	routes.get('/todo/:id', (req, res) => {
-		db.get("SELECT id, subject, content, priority FROM todo WHERE id = ?", req.params.id, (err, row) => {
+	// FOLLOW-UP FOR DELETE
+	function todo_delete_yes(id, res) {
+		db.run("DELETE FROM todo WHERE id=?", id, (err) => {
 			if(err) throw err
-			res.send(row);
-		})
-	})
-
-	//VIEW ALL TODO
-	routes.get('/todo-all', (req, res) => {
-		db.all("SELECT id, subject, content, priority FROM todo", (err, rows) => {
-			if(err) throw err
-			res.send(rows);
-		})
-	})
-
-	//VIEW TODO RANKED BY PRIORITY
-	routes.get('/todo-rank-priority', (req, res) => {
-		db.all("SELECT id, subject, content, priority FROM todo ORDER BY priority", (err, rows) => {
-			if(err) throw err
-			res.send(rows);
-		})
-	})
-
-	//VIEW TODO BY PRIORITY
-	routes.get('/todo-priority/:priority', (req, res) => {
-		db.all("SELECT subject, content, priority FROM todo WHERE priority = ?", req.params.priority, (err, rows) => {
-			if(err) throw err
-			res.send(rows);
-		})
-	})
-
-	//ADD TODO
-	routes.post('/todo-add', (req, res) => {
-		db.run("INSERT INTO todo(priority,subject,content,datestamp) VALUES (?, ?, ?, ?)", [req.body.priority, req.body.subject, req.body.content, Date.now()], (err) => {
-			if(err) throw err
-			res.send("ADDED SUCCESSFULLY")
-		})
-	})
-
-	//UPDATE TODO
-	routes.put('/todo-update/:id', (req, res) => {
-		db.run("UPDATE todo SET priority=?, subject=?, content=?, datestamp=? WHERE id=?", [req.body.priority, req.body.subject, req.body.content, Date.now(), req.params.id], (err) => {
-			if(err) throw err
-			db.get("SELECT id, subject, content, priority FROM todo WHERE id = ?", req.params.id, (err, row) => {
-				if(err) throw err
-				res.send(row);
+			let message = "Okay. Successfully deleted the task!"
+			res.json({
+				"speech": message,
+				"displayText": message
 			})
 		})
-	})
-
-	//DELETE ALL TODO
-	routes.delete('/todo-remove-all', (req, res) => {
-		db.all("SELECT subject, content, priority FROM todo", (err, rows) => {
-			if(err) throw err
-			db.run("DELETE FROM todo", (err) => {
-				if(err) throw err
-			})
-			res.send(rows)
-		})
-	})
-
-	//DELETE TODO BY ID
-	routes.delete('/todo-remove/:id', (req, res) => {
-		db.get("SELECT subject, content, priority FROM todo WHERE id = ?", req.params.id, (err, row) => {
-			if(err) throw err
-			db.run("DELETE FROM todo WHERE id=?", req.params.id, (err) => {
-				if(err) throw err
-			})
-			res.send(row)
-		})
-	})
-
-	//API WEBHOOK FOR DIALOGFLOW
-	routes.post('/api/todoWebhook', (req, res) => {
-		let id = 0
-		let subject = ''
-		let content = ''
-		let priority = 0
-		switch(req.body.queryResult.action) {
-			case "todo-create-subject":
-				subject = req.body.queryResult.parameters.subject
-				console.log("Subject: " + subject)
-				break
-			case "todo-create-content":
-				subject = req.body.queryResult.parameters.content
-				console.log("Content: " + content)
-				break
-			case "todo-create-end":
-				priority = req.body.queryResult.parameters.priority
-				console.log("Priority: " + priority)
-				req.send(todo_create(subject, content, priority))
-				break
-			case "todo-view":	// add todo-view-all, todo-view-priority, todo-rank-priority, todo-view-id
-				console.log("LOLOLOLOL")
-				todo_view_all()
-				break
-			case "todo-update":
-				console.log("JAJAJAJAJA")
-				// todo_update()
-				break
-			case "todo-delete": // add delete-all, delete-priority, delete-id
-				console.log("WWWWWWWW")
-				// todo_delete()
-				break
-			default:
-				console.log(req.body)
+	}
 
 
+	let id = 0
+	let subject = ''
+	let content = ''
+	let priority = 0
+
+	//WEBHOOK FOR DIALOGFLOW
+	routes.post('/todoWebhook', (req, res) => {
+		if(req.body.result.action === "todo-create") { // CREATE A TODO
+			subject = req.body.result.parameters.subject
+			content = req.body.result.parameters.content
+			priority = req.body.result.parameters.priority
+			todo_create(priority, subject, content, res)
+		}else if(req.body.result.action === "todo-view-all") {	// add todo-view-all, todo-view-priority, todo-rank-priority, todo-view-id
+			todo_view_all(res)
+		} else if(req.body.result.action === "todo-update") {
+			id = req.body.result.parameters.id
+			subject = req.body.result.parameters.subject
+			content = req.body.result.parameters.content
+			priority = req.body.result.parameters.priority
+			todo_update(priority, subject, content, id, res)
+		} else if(req.body.result.action === "todo-delete") { // add delete-all, delete-priority, delete-id
+			id = req.body.result.parameters.id
+			todo_delete_id(id, res)
+		} else if(req.body.result.action === "todo-delete-yes") { // add delete-all, delete-priority, delete-id
+			todo_delete_yes(id, res)
+		} else {
+			console.log(req.body)
 		}
+	})
+
+	// PRIVACY POLICY FOR FACEBOOK INTEGRATION
+	routes.get('/privacy-policy', (req, res) => {
+		res.send("PRIVACY POLICY")
 	})
 
 	return routes;
